@@ -12,6 +12,8 @@ pub use tokio::*;
 
 #[cfg(any(feature = "__signal-client-async-compatible", feature = "services-async"))]
 mod async_std {
+    // isahc 1.x is built on http 0.2.
+    use isahc::http;
 
     #[cfg(any(
         feature = "native-tls-vendored",
@@ -33,8 +35,9 @@ mod async_std {
         use super::Response;
 
         impl Response {
-            pub fn status(&self) -> http::StatusCode {
-                self.0.status()
+            pub fn status(&self) -> ::http::StatusCode {
+                // isahc's status is http 0.2; SignalError carries http 1. Same code range.
+                ::http::StatusCode::from_u16(self.0.status().as_u16()).unwrap()
             }
 
             pub async fn text(mut self) -> io::Result<String> {
